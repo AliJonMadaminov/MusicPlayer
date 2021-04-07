@@ -1,5 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/main_nav">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_nav"
+    app:startDestination="@id/musicListFragment">
 
+    <fragment
+        android:id="@+id/musicListFragment"
+        android:name="com.example.aliplayer.ui.fragment.MusicListFragment"
+        android:label="fragment_music_list"
+        tools:layout="@layout/fragment_music_list" >
+        <action
+            android:id="@+id/action_musicListFragment_to_musicDetailsFragment"
+            app:destination="@id/musicDetailsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/musicDetailsFragment"
+        android:name="com.example.aliplayer.ui.fragment.MusicDetailsFragment"
+        android:label="fragment_music_details"
+        tools:layout="@layout/fragment_music_details" >
+        <argument
+            android:name="title"
+            app:argType="string" />
+        <argument
+            android:name="artist_name"
+            app:argType="string" />
+        <argument
+            android:name="duration"
+            app:argType="integer" />
+        <argument
+            android:name="id"
+            app:argType="integer" />
+    </fragment>
 </navigation>
