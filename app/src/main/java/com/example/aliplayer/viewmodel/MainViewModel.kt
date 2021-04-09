@@ -17,17 +17,19 @@ class MainViewModel private constructor() : ViewModel() {
     private val viewModelScope = CoroutineScope(Dispatchers.Main + job)
     private val mainRepo = MainRepo()
 
+
     val audioToPlayLive:MutableLiveData<Audio> = MutableLiveData()
     val shouldStopLive:MutableLiveData<Boolean> = MutableLiveData()
     val seektoLive:MutableLiveData<Int> = MutableLiveData()
+    val audioCurrentPosition = MutableLiveData<Int>()
+    fun getAudios(): LiveData<List<Audio>> {
+        return mainRepo.audioLiveData
+    }
 
-    fun fetchAudios(cursor: Cursor?): LiveData<List<Audio>> {
-
+    fun fetchAudios(cursor: Cursor?) {
         viewModelScope.launch {
             mainRepo.fetchAudios(cursor)
         }
-
-        return mainRepo.audioLiveData
     }
 
 

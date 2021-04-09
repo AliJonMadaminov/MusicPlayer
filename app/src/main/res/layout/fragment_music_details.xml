@@ -23,6 +23,7 @@
         android:layout_marginStart="12dp"
         android:layout_marginEnd="12dp"
         android:maxLines="1"
+        android:gravity="center_horizontal"
         android:textColor="@color/black"
         android:textSize="16sp"
         app:layout_constraintBottom_toTopOf="@+id/img_cover"
@@ -57,20 +58,21 @@
 
     <ImageView
         android:id="@+id/img_cover"
-        android:layout_width="match_parent"
-        android:layout_height="320dp"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
         android:layout_marginHorizontal="24dp"
         android:scaleType="centerCrop"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.461"
-        tools:layout_editor_absoluteX="32dp"
+        app:layout_constraintVertical_bias="0.467"
         tools:src="@tools:sample/avatars" />
 
     <ImageView
-        android:id="@+id/img_play"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:id="@+id/img_play_or_stop"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
         android:scaleType="centerCrop"
         android:src="@drawable/ic_baseline_pause_circle_24"
         app:layout_constraintEnd_toEndOf="parent"
@@ -82,7 +84,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.82"
+        app:layout_constraintGuide_percent="0.77"
         tools:viewBindingIgnore="true" />
 
     <SeekBar
@@ -91,6 +93,37 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="12dp"
         android:layout_marginBottom="12dp"
-        app:layout_constraintBottom_toTopOf="@+id/img_play"
+        app:layout_constraintBottom_toTopOf="@+id/img_play_or_stop"
         tools:layout_editor_absoluteX="370dp" />
+
+    <ImageView
+        android:id="@+id/img_next"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="16dp"
+        android:src="@drawable/ic_skip_next"
+        app:layout_constraintBottom_toBottomOf="@+id/img_play_or_stop"
+        app:layout_constraintStart_toEndOf="@+id/img_play_or_stop"
+        app:layout_constraintTop_toTopOf="@+id/img_play_or_stop" />
+
+    <ImageView
+        android:id="@+id/img_previous"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginEnd="16dp"
+        android:src="@drawable/ic_skip_previous"
+        app:layout_constraintBottom_toBottomOf="@+id/img_play_or_stop"
+        app:layout_constraintEnd_toStartOf="@+id/img_play_or_stop"
+        app:layout_constraintTop_toTopOf="@+id/img_play_or_stop" />
+
+    <ImageView
+        android:id="@+id/imageView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="12dp"
+        android:src="@drawable/ic_favorite_border"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/img_play_or_stop" />
 </androidx.constraintlayout.widget.ConstraintLayout>

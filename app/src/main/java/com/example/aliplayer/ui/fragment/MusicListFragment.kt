@@ -10,11 +10,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
-import com.example.aliplayer.R
 import com.example.aliplayer.databinding.FragmentMusicListBinding
 import com.example.aliplayer.model.Audio
 import com.example.aliplayer.ui.adapter.AudioAdapter
@@ -80,7 +78,8 @@ class MusicListFragment : Fragment() {
                 }
             }
 
-            mainViewModel.fetchAudios(cursor).observe(requireActivity(), Observer {
+            mainViewModel.fetchAudios(cursor)
+            mainViewModel.getAudios().observe(requireActivity(), Observer {
                 adapter.addAll(it)
             })
 
@@ -112,9 +111,6 @@ class MusicListFragment : Fragment() {
 
     }
 
-    fun playMusic() {
-
-    }
 
     fun requestPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
