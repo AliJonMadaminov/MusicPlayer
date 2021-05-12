@@ -1,21 +1,25 @@
 package com.example.aliplayer.ui.fragment
 
 import android.Manifest
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
+import android.os.IBinder
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.example.aliplayer.databinding.FragmentMusicListBinding
 import com.example.aliplayer.model.Audio
-import com.example.aliplayer.ui.adapter.AudioAdapter
+import com.example.aliplayer.service.AudioService
+import com.example.aliplayer.adapter.AudioAdapter
 import com.example.aliplayer.viewmodel.MainViewModel
 
 
@@ -43,7 +47,6 @@ class MusicListFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
 
-//        val mainViewModel = MainViewModel.Companion.Factory().create(MainViewModel::class.java)
         val mainFactory = MainViewModel.Companion.Factory()
         val mainViewModel =
             ViewModelProvider(requireActivity(), mainFactory).get(MainViewModel::class.java)
@@ -52,65 +55,51 @@ class MusicListFragment : Fragment() {
         if (!permissionIsGranted()) {
             requestPermission()
         } else {
-            val cursor = context?.contentResolver?.query(
-                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                getProjection(),
-                null,
-                null,
-                null
-            )
 
-            val adapter = AudioAdapter() {
+            audios = mainViewModel.getAudios()
+
+            val adapter = AudioAdapter(audios) {
 
                 it.apply {
+                    val intent = Intent(requireActivity(), AudioService::class.java)
+                    
+                    requireActivity().bindService(intent, object : ServiceConnection {
+                        override fun onServiceDisconnected(name: ComponentName?) {
 
+                        }
+
+                        override fun onServiceConnected(name: ComponentName?, iBinder: IBinder?) {
+                            val service = (iBinder as AudioService.AudioBinder).getInstance()
+                            service.audioList = audios
+                        }
+
+                    }, Context.BIND_AUTO_CREATE)
                     if (title != null && artistName != null && id != null) {
 
-                        val directions = MusicListFragmentDirections.actionMusicListFragmentToMusicDetailsFragment(
-                            title!!,
-                            artistName!!,
-                            duration,
-                            id
-                        )
-                        findNavController().navigate(directions)
+                        val directions =
+                            coverPath?.let { it1 ->
+                                MusicListFragmentDirections.actionMusicListFragmentToMusicDetailsFragment(
+                                    title!!,
+                                    artistName!!,
+                                    duration,
+                                    it1,
+                                    id
+                                )
+                            }
+                        if (directions != null) {
+                            findNavController().navigate(directions)
+                        }
 
                     }
                 }
+
             }
-
-            mainViewModel.fetchAudios(cursor)
-            mainViewModel.getAudios().observe(requireActivity(), Observer {
-                adapter.addAll(it)
-            })
-
             binding.recycler.adapter = adapter
+
         }
 
 
     }
-
-    companion object {
-
-
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            MusicListFragment().apply {
-
-            }
-    }
-
-
-    private fun getProjection(): Array<String> {
-
-        return arrayOf(
-            MediaStore.Audio.AudioColumns._ID,
-            MediaStore.Audio.AudioColumns.ARTIST,
-            MediaStore.Audio.AudioColumns.TITLE,
-            MediaStore.Audio.AudioColumns.DURATION
-        )
-
-    }
-
 
     fun requestPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

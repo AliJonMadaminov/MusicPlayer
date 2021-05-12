@@ -1,52 +1,88 @@
 package com.example.aliplayer.ui.fragment
 
-import android.content.ContentUris
-import android.media.MediaPlayer
+import android.content.*
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
+import android.os.IBinder
 import android.provider.MediaStore
-import android.util.Log
 import android.util.Size
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SeekBar
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.ui.NavigationUI
 import com.bumptech.glide.Glide
 import com.example.aliplayer.R
 import com.example.aliplayer.databinding.FragmentMusicDetailsBinding
 import com.example.aliplayer.model.Audio
+import com.example.aliplayer.service.AudioService
 import com.example.aliplayer.viewmodel.MainViewModel
-import kotlinx.coroutines.delay
-import java.lang.Exception
-import java.lang.Thread.sleep
+import com.example.aliplayer.viewmodel.MusicDetailsViewModel
+import java.io.File
+import java.net.URI
 
 
 class MusicDetailsFragment : Fragment() {
-//TODO remove redundant audio
+
     lateinit var audio: Audio
     lateinit var binding: FragmentMusicDetailsBinding
-    lateinit var mainViewModel: MainViewModel
+    lateinit var viewmodel:MusicDetailsViewModel
+    var audioService: AudioService? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val args = MusicDetailsFragmentArgs.fromBundle(requireArguments())
 
-
         args.apply {
-            audio = Audio(title, artistName, duration, id)
+            audio = Audio(title, artistName, duration, coverPath, false, id)
+        }
+
+        val intent = Intent(requireActivity(), AudioService::class.java)
+        requireActivity().bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+
+    }
+
+    val serviceConnection = object : ServiceConnection {
+        override fun onServiceDisconnected(name: ComponentName?) {
 
         }
 
+        override fun onServiceConnected(name: ComponentName?, iBinder: IBinder?) {
+            val binder = (iBinder as AudioService.AudioBinder)
+            audioService = binder.getInstance()
+            audioService?.playAudio(audio)
+            audioService?.isAudioCompletedLive?.observe(this@MusicDetailsFragment, Observer {
+                audioService?.playNext()
+                initUI()
+            })
 
-        mainViewModel = createMainViewModel()
-        mainViewModel.audioToPlayLive.value = audio
+            binding.seekBar.progress = 0
+            binding.seekBar.max = audio.duration
+            audioService?.currentPosition?.observe(this@MusicDetailsFragment, Observer {
+                binding.seekBar.progress = it
+            })
+
+            audioService?.isPlayingFromNotification?.observe(this@MusicDetailsFragment, Observer {
+                if (it) {
+                    binding.imgPlayOrStop.setImageResource(R.drawable.ic_baseline_pause_circle_24)
+                } else {
+                    binding.imgPlayOrStop.setImageResource(R.drawable.ic_baseline_play_circle_24)
+                }
+            })
+
+            audioService?.isNextPressedNotification?.observe(
+                viewLifecycleOwner,
+                Observer { isNextPressed ->
+                    initUI()
+                })
+
+        }
 
     }
 
@@ -61,8 +97,13 @@ class MusicDetailsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-//        binding.txtTitle.text = audio.title
-//        binding.txtArtist.text = audio.artistName
+        binding.seekBar.progress = 0
+        binding.seekBar.max = audio.duration
+        binding.txtTitle.text = audio.title
+        binding.txtArtist.text = audio.artistName
+        binding.imgRepeat.setOnClickListener {
+            audioService?.setLooping(true)
+        }
         observeAudioChanged()
 
         val contentUri = getContentUri()
@@ -83,45 +124,27 @@ class MusicDetailsFragment : Fragment() {
             }
         }
 
-        setOnSeekBarChangeListenerAndDuration()
+        setOnSeekBarChangeListener()
 
         binding.imgPlayOrStop.setOnClickListener {
             onPlayOrStop()
         }
 
+
         binding.imgBack.setOnClickListener {
             findNavController().popBackStack()
         }
 
-        mainViewModel.audioCurrentPosition.observe(viewLifecycleOwner, Observer {
-            binding.seekBar.progress = it
-        })
-
-
 
 
         binding.imgPrevious.setOnClickListener {
-            val audios = mainViewModel.getAudios().value
-            val index= audios?.indexOf(audio)
-            if (index == 0) {
-                mainViewModel.audioToPlayLive.value = audios[audios.size-1]
-            }else {
-                if (index != null) {
-                    mainViewModel.audioToPlayLive.value = audios[index - 1]
-                }
-            }
+            audioService?.playPrevious()
+            initUI()
         }
 
         binding.imgNext.setOnClickListener {
-            val audios = mainViewModel.getAudios().value
-            val index= audios?.indexOf(audio)
-            if (index == audios?.size?.minus(1)) {
-                mainViewModel.audioToPlayLive.value = audios?.get(0)
-            }else {
-                if (index != null) {
-                    mainViewModel.audioToPlayLive.value = audios[index + 1]
-                }
-            }
+            audioService?.playNext()
+            initUI()
         }
 
     }
@@ -137,27 +160,14 @@ class MusicDetailsFragment : Fragment() {
     }
 
     fun onPlayOrStop() {
-        mainViewModel.shouldStopLive.apply {
-            if (this.value == null) {
-                this.value = true
-                binding.imgPlayOrStop.setImageResource(R.drawable.ic_baseline_play_circle_24)
-                return
-            }
-
-            mainViewModel.shouldStopLive.value?.let {
-                if (!it) {
-                    this.value = true
-                    binding.imgPlayOrStop.setImageResource(R.drawable.ic_baseline_play_circle_24)
-                } else {
-                    this.value = false
-                    binding.imgPlayOrStop.setImageResource(R.drawable.ic_baseline_pause_circle_24)
-                }
-            }
+        if (audioService?.playAndPostCurrentPositionOrStop()!!) {
+            binding.imgPlayOrStop.setImageResource(R.drawable.ic_baseline_pause_circle_24)
+        } else {
+            binding.imgPlayOrStop.setImageResource(R.drawable.ic_baseline_play_circle_24)
         }
     }
 
-    fun setOnSeekBarChangeListenerAndDuration() {
-//        binding.seekBar.max = audio.duration
+    fun setOnSeekBarChangeListener() {
         binding.seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
 
@@ -168,7 +178,7 @@ class MusicDetailsFragment : Fragment() {
             }
 
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                mainViewModel.seektoLive.value = seekBar?.progress
+                seekBar?.progress?.let { audioService?.seekToPostion(it) }
             }
         })
     }
@@ -188,15 +198,28 @@ class MusicDetailsFragment : Fragment() {
     }
 
     fun observeAudioChanged() {
-        mainViewModel.audioToPlayLive.observe(viewLifecycleOwner, Observer {
-            mainViewModel.shouldStopLive.value = false
+//        mainViewModel.audioToPlayLive.observe(viewLifecycleOwner, Observer {
+//            mainViewModel.shouldStopLive.value = false
+//
+//            audio = it
 
-            audio = it
-            binding.txtTitle.text = it.title
-            binding.txtArtist.text = it.artistName
-            binding.seekBar.progress = 0
-            binding.seekBar.max = it.duration
-            binding.imgPlayOrStop.setImageResource(R.drawable.ic_baseline_pause_circle_24)
-        })
+//        })
     }
+
+    fun initUI() {
+        audioService?.currentAudio?.apply {
+            binding.txtTitle.text = this.title
+            binding.txtArtist.text = this.artistName
+            binding.seekBar.progress = 0
+            binding.seekBar.max = this.duration
+            binding.imgPlayOrStop.setImageResource(R.drawable.ic_baseline_pause_circle_24)
+        }
+    }
+
+    override fun onDestroy() {
+        requireActivity().unbindService(serviceConnection)
+        super.onDestroy()
+    }
+
+
 }

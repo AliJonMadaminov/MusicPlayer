@@ -1,17 +1,20 @@
-package com.example.aliplayer.ui.adapter
+package com.example.aliplayer.adapter
 
-import android.content.ContentUris
-import android.provider.MediaStore
+import android.media.MediaMetadataRetriever
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.aliplayer.R
 import com.example.aliplayer.databinding.ItemAudioBinding
 import com.example.aliplayer.model.Audio
-import java.lang.Error
 
-class AudioAdapter(var audios: List<Audio> = listOf(), val onRootClick:(audio:Audio) -> Unit) :
+class AudioAdapter(
+    private var audios: List<Audio> = listOf(),
+    val onRootClick: (audio: Audio) -> Unit
+) :
     RecyclerView.Adapter<AudioAdapter.ViewHolderAudio>() {
 
 
@@ -29,18 +32,18 @@ class AudioAdapter(var audios: List<Audio> = listOf(), val onRootClick:(audio:Au
             txtTitle.text = audio.title
             txtArtistName.text = audio.artistName
 
-            try {
-                val contentUri = audio.id?.toLong()?.let {
-                    ContentUris.withAppendedId(
-                        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                        it
-                    )
+            if (audio.coverPath != null) {
+//                val image = getAlbumToAdapter(Uri.parse(audio.coverPath))
+                if (true) {
+
+                    Glide.with(imageView.context)
+                        .load(Uri.parse(audio.coverPath))
+                        .placeholder(R.drawable.audio_icon)
+                        .into(imageView)
+
                 }
-
-                
-            }catch (e:Error) {
-
             }
+
 
             holder.binding.root.setOnClickListener {
                 onRootClick(audio)
@@ -54,8 +57,17 @@ class AudioAdapter(var audios: List<Audio> = listOf(), val onRootClick:(audio:Au
         val binding = ItemAudioBinding.bind(view)
     }
 
-    fun addAll(_audios:List<Audio>) {
+    fun addAll(_audios: List<Audio>) {
         audios = _audios
         notifyDataSetChanged()
     }
+
+    private fun getAlbumToAdapter(uri: Uri): ByteArray? {
+        val retriever = MediaMetadataRetriever()
+        retriever.setDataSource(uri.toString())
+        val art = retriever.embeddedPicture
+        retriever.release()
+        return art
+    }
+
 }

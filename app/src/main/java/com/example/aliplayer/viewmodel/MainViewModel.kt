@@ -1,10 +1,9 @@
 package com.example.aliplayer.viewmodel
 
 import android.database.Cursor
-import android.media.MediaPlayer
 import androidx.lifecycle.*
 import com.example.aliplayer.model.Audio
-import com.example.aliplayer.repository.MainRepo
+import com.example.aliplayer.repository.AudioServiceRepo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -15,16 +14,14 @@ class MainViewModel private constructor() : ViewModel() {
 
     private val job = Job()
     private val viewModelScope = CoroutineScope(Dispatchers.Main + job)
-    private val mainRepo = MainRepo()
+    private val mainRepo = AudioServiceRepo()
 
 
-    val audioToPlayLive:MutableLiveData<Audio> = MutableLiveData()
-    val shouldStopLive:MutableLiveData<Boolean> = MutableLiveData()
-    val seektoLive:MutableLiveData<Int> = MutableLiveData()
+    val audioToPlayLive: MutableLiveData<Audio> = MutableLiveData()
+    val shouldStopLive: MutableLiveData<Boolean> = MutableLiveData()
+    val seektoLive: MutableLiveData<Int> = MutableLiveData()
     val audioCurrentPosition = MutableLiveData<Int>()
-    fun getAudios(): LiveData<List<Audio>> {
-        return mainRepo.audioLiveData
-    }
+
 
     fun fetchAudios(cursor: Cursor?) {
         viewModelScope.launch {
@@ -32,6 +29,7 @@ class MainViewModel private constructor() : ViewModel() {
         }
     }
 
+    fun getAudios() = mainRepo.audios
 
     companion object {
 

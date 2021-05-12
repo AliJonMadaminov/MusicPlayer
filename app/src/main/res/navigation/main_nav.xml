@@ -9,7 +9,7 @@
         android:id="@+id/musicListFragment"
         android:name="com.example.aliplayer.ui.fragment.MusicListFragment"
         android:label="fragment_music_list"
-        tools:layout="@layout/fragment_music_list" >
+        tools:layout="@layout/fragment_music_list">
         <action
             android:id="@+id/action_musicListFragment_to_musicDetailsFragment"
             app:destination="@id/musicDetailsFragment" />
@@ -18,7 +18,7 @@
         android:id="@+id/musicDetailsFragment"
         android:name="com.example.aliplayer.ui.fragment.MusicDetailsFragment"
         android:label="fragment_music_details"
-        tools:layout="@layout/fragment_music_details" >
+        tools:layout="@layout/fragment_music_details">
         <argument
             android:name="title"
             app:argType="string" />
@@ -28,6 +28,9 @@
         <argument
             android:name="duration"
             app:argType="integer" />
+        <argument
+            android:name="coverPath"
+            app:argType="string" />
         <argument
             android:name="id"
             app:argType="integer" />
